@@ -63,6 +63,13 @@ void clientChat(int sockfd)
     char buff[MAX_BUF] = {0};
     int n;
 
+    // Send name to server
+    bzero(buff, sizeof(buff));
+    printf("Select name: ");
+    n = 0;
+    while ((buff[n++] = getchar()) != '\n');
+    write(sockfd, buff, sizeof(buff));
+
     // Receive welcome message
     read(sockfd, buff, sizeof(buff));
     printf(buff);
@@ -74,6 +81,7 @@ void clientChat(int sockfd)
         printf("Enter message: ");
         n = 0;
         while ((buff[n++] = getchar()) != '\n');
+        // @bug triggering this somehow crashes the server?
         if ((strncmp(buff, "-exit", 4)) == 0)
         {
             printf("Exiting\n");
