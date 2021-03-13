@@ -9,11 +9,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-/*
-    Create TCP socket.
-    Connect newly created client socket to server.
-*/
-
 /**
 * Initialize client routine, connect to the server, choose client name and start I/O to the chat server
 */
@@ -82,6 +77,7 @@ void clientChat(int sockfd)
     printf(buff);
     printf("Type -exit to quit\n");
 
+    // I/O loop to server
     // @todo separate read and write into threads
     while (true)
     {

@@ -24,7 +24,7 @@ void serverInit()
     int len;
     int sessionCount = 0;   // Unique ID, mostly for logging
 
-    FILE *fp;
+    FILE *fp;   // Log file
 
     // Create listener socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -168,6 +168,7 @@ void *handleNewClient(void *arg)
 
     bzero(buff, sizeof(buff));
 
+    // Send name acknowledgement to client
     snprintf(buff, MAX_BUF, "Welcome, %s\n", clientList[id].clientName);
     write(clientList[id].connectionFd, buff, sizeof(buff));
 
