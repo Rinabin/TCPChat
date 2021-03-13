@@ -7,12 +7,16 @@
 #include <stdio.h>
 #include <strings.h>
 #include <string.h>
+#include <stdbool.h>
 
 /*
     Create TCP socket.
     Connect newly created client socket to server.
 */
 
+/**
+* Initialize client routine, connect to the server, choose client name and start I/O to the chat server
+*/
 void clientInit()
 {
     int sockfd;
@@ -58,6 +62,9 @@ void clientInit()
     close(sockfd);
 }
 
+/**
+* Function to handle I/O to server
+*/
 void clientChat(int sockfd)
 {
     char buff[MAX_BUF] = {0};
@@ -75,21 +82,22 @@ void clientChat(int sockfd)
     printf(buff);
     printf("Type -exit to quit\n");
 
-    while (1)
+    // @todo separate read and write into threads
+    while (true)
     {
         bzero(buff, sizeof(buff));
         printf("Enter message: ");
         n = 0;
         while ((buff[n++] = getchar()) != '\n');
-        // @bug triggering this somehow crashes the server?
-        if ((strncmp(buff, "-exit", 4)) == 0)
+        // @bug triggering this somehow crashes the server? Probably caused by shutdown() and close()
+        /*if ((strncmp(buff, "-exit", 4)) == 0)
         {
             printf("Exiting\n");
             break;
-        }
+        }*/
         write(sockfd, buff, sizeof(buff));
         bzero(buff, sizeof(buff));
         read(sockfd, buff, sizeof(buff));
-        printf("Message from server: %s", buff);
+        printf(buff);
     }
 }

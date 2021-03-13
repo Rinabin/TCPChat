@@ -132,11 +132,11 @@ void broadcastMsg(char* msg, int len, client* clientList)
     // @todo There has to be better way of handling this...
     for (int i = 0; i < MAX_CLIENTS; i++)
     {
-        /*if (clientPresent[i] == true)
+        // Broadcast message to client if client is connected
+        if (clientList[i].clientConnected == true)
         {
-            // Broadcast message to client if client exists
-            // write(connfd, buff, sizeof(buff));
-        }*/
+            write(clientList[i].connectionFd, msg, len);
+        }
     }
 }
 
@@ -150,8 +150,10 @@ void *handleNewClient(void *arg)
     int id = ((thread_args*)arg)->currentId;
 
     char buff[MAX_BUF] = {0};
+    char msg[MAX_BUF] = {0};
 
     // Read the client name
+    // @todo Tie name transfer to initial connection instead
     if (read(clientList[id].connectionFd, buff, sizeof(buff)) >= 0)
     {
         snprintf(clientList[id].clientName, MAX_CLIENT_NAME, buff);
@@ -170,6 +172,7 @@ void *handleNewClient(void *arg)
     write(clientList[id].connectionFd, buff, sizeof(buff));
 
     // Process chat I/O
+    // @todo separate read and write into threads
     while (true)
     {
         bzero(buff, sizeof(buff));
@@ -191,11 +194,11 @@ void *handleNewClient(void *arg)
         }
 
         // Print buffer which contains the client contents
-        printf("From client %s: %s\n", clientList[id].clientName, buff);
+        snprintf(msg, MAX_BUF, "%s: %s", clientList[id].clientName, buff);
+        printf(msg);
 
         // Broadcast message to all connected clients
-        write(clientList[id].connectionFd, buff, sizeof(buff));
-        //broadcastMsg(buff, sizeof(buff), pthread_t* clients, bool* clientPresent)
+        broadcastMsg(msg, sizeof(msg), clientList);
     }
 
     return 0;
