@@ -24,7 +24,7 @@ void serverInit()
     int len;
     int sessionCount = 0;   // Unique ID, mostly for logging
 
-    FILE *fp;   // Log file
+    FILE *logFp;   // Log file
 
     // Create listener socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -56,16 +56,16 @@ void serverInit()
         return;
     }
 
-    fp = fopen(LOGFILE_NAME, "a+");
+    logFp = fopen(LOGFILE_NAME, "a+");
 
     printf("Server started\n");
-    fputs("\n\nServer started\n", fp);
-    fflush(fp);
+    fputs("\n\nServer started\n", logFp);
+    fflush(logFp);
 
     len = sizeof(cli);
     thread_args *args = malloc (sizeof *args);
     args->clientList = clientList;
-    args->fp = fp;
+    args->logFp = logFp;
 
     // Begin listening for client requests
     while (true)
@@ -108,8 +108,8 @@ void serverInit()
             // Log connection event
             char log_entry[MAX_LOG_MSG_SIZE];
             snprintf(log_entry, MAX_LOG_MSG_SIZE, "New client connecting (ID:%d)\n", clientList[freeId].clientThreadId);
-            fputs(log_entry, fp);
-            fflush(fp);
+            fputs(log_entry, logFp);
+            fflush(logFp);
 
             // @todo Handle thread creation failure
             pthread_create(&clientList[freeId].clientThread, NULL, handleNewClient, args);
@@ -121,7 +121,7 @@ void serverInit()
     close(sockfd);
 
     // Close the logfile
-    fclose(fp);
+    fclose(logFp);
 }
 
 /**
@@ -146,7 +146,7 @@ void broadcastMsg(char* msg, int len, client* clientList)
 void *handleNewClient(void *arg)
 {
     client *clientList = ((thread_args*)arg)->clientList;
-    FILE *fp = ((thread_args*)arg)->fp;
+    FILE *logFp = ((thread_args*)arg)->logFp;
     int id = ((thread_args*)arg)->currentId;
 
     char buff[MAX_BUF] = {0};
@@ -189,8 +189,8 @@ void *handleNewClient(void *arg)
 
             // Log disconnect event
             // @todo Use mutex to avoid multi-thread file access
-            fputs(log_entry, fp);
-            fflush(fp);
+            fputs(log_entry, logFp);
+            fflush(logFp);
             pthread_exit(0);
         }
 
