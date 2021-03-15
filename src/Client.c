@@ -53,6 +53,7 @@ void clientInit()
     clientChat(sockfd);
 
     // Close socket at the end
+    // @bug triggering this somehow crashes the server?
     shutdown(sockfd, SHUT_RDWR);
     close(sockfd);
 }
@@ -62,6 +63,9 @@ void clientInit()
 */
 void clientChat(int sockfd)
 {
+    pthread_t inThread;
+    pthread_t outThread;
+
     char buff[MAX_BUF] = {0};
     int n;
 
@@ -78,22 +82,51 @@ void clientChat(int sockfd)
     printf("Type -exit to quit\n");
 
     // I/O loop to server
-    // @todo separate read and write into threads
+    pthread_create(&inThread, NULL, readThread, (void *)(intptr_t)sockfd);
+    pthread_create(&outThread, NULL, writeThread, (void *)(intptr_t)sockfd);
+
+    pthread_join(inThread, NULL);
+}
+
+/**
+* Thread for reading messages from server continuously and outputting them on-screen
+*/
+void *readThread(void *arg)
+{
+    char buff[MAX_BUF] = {0};
+    int sockfd = (intptr_t)arg;
+
+    //@todo make new message move text input prompt (and existing input text) to after it
     while (true)
     {
         bzero(buff, sizeof(buff));
-        printf("Enter message: ");
-        n = 0;
-        while ((buff[n++] = getchar()) != '\n');
-        // @bug triggering this somehow crashes the server? Probably caused by shutdown() and close()
-        /*if ((strncmp(buff, "-exit", 4)) == 0)
-        {
-            printf("Exiting\n");
-            break;
-        }*/
-        write(sockfd, buff, sizeof(buff));
-        bzero(buff, sizeof(buff));
         read(sockfd, buff, sizeof(buff));
         printf(buff);
+    }
+}
+
+/**
+* Thread for inputting and sending messages to the server
+*/
+void *writeThread(void *arg)
+{
+    char buff[MAX_BUF] = {0};
+    int n;
+    int sockfd = (intptr_t)arg;
+
+    while (true)
+    {
+        bzero(buff, sizeof(buff));
+        n = 0;
+        printf("Enter message: ");
+        while ((buff[n++] = getchar()) != '\n');
+        if ((strncmp(buff, "-exit", 4)) == 0)
+        {
+            //@todo shut down both threads
+            //printf("Exiting\n");
+            //break;
+        }
+        write(sockfd, buff, sizeof(buff));
+        bzero(buff, sizeof(buff));
     }
 }

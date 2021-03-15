@@ -6,8 +6,7 @@
 void clientInit();
 void clientChat(int sockfd);
 
-//@todo Ideally make asynchronous read/write without text being read in the middle of input. Will involve cutting of input, parsing output and pasting input again
-//void readThread();
-//void writeThread();
+void *readThread(void *arg);
+void *writeThread(void *arg);
 
 #endif // CLIENT_H
