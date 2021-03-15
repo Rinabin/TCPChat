@@ -16,6 +16,7 @@ typedef struct
     int connectionFd;
     int clientThreadId;
     bool clientConnected;   // If the client slot is occupied or not
+    pthread_mutex_t clientMutex;    // Output mutex for writing to client
 } client;
 
 typedef struct

@@ -15,7 +15,7 @@ void serverInit()
     struct sockaddr_in servaddr;
     struct sockaddr_in cli;
 
-    client clientList[MAX_CLIENTS] = {{ 0, {0}, 0, 0, 0 }};
+    client clientList[MAX_CLIENTS] = {{ 0, {0}, 0, 0, 0, 0 }};
 
     int len;
     int sessionCount = 0;   // Unique ID, mostly for logging
@@ -136,7 +136,9 @@ void broadcastMsg(char* msg, int len, client* clientList)
         // Broadcast message to client if client is connected
         if (clientList[i].clientConnected == true)
         {
+            pthread_mutex_lock(&clientList[i].clientMutex);
             write(clientList[i].connectionFd, msg, len);
+            pthread_mutex_unlock(&clientList[i].clientMutex);
         }
     }
 }
