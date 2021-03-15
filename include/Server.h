@@ -21,8 +21,9 @@ typedef struct
 typedef struct
 {
     client *clientList; // Entire client base, for public broadcasts
-    FILE *logFp;   // File descriptor for logging client disconnects
     int currentId;  // For knowing which client the thread is for
+    FILE *logFp;    // File descriptor for logging client disconnects
+    pthread_mutex_t logMutex;   // Log file access mutex
 } thread_args;
 
 void serverInit();

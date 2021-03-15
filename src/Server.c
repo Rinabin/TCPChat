@@ -6,10 +6,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-/*
-Note to self: make sure read() times out
-*/
-
 /**
 * Initialize server routine, start logging, listening for incoming connections and set up chat threads for them
 */
@@ -25,6 +21,8 @@ void serverInit()
     int sessionCount = 0;   // Unique ID, mostly for logging
 
     FILE *logFp;   // Log file
+
+    pthread_mutex_t logMutex;
 
     // Create listener socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -66,6 +64,7 @@ void serverInit()
     thread_args *args = malloc (sizeof *args);
     args->clientList = clientList;
     args->logFp = logFp;
+    args->logMutex = logMutex;
 
     // Begin listening for client requests
     while (true)
@@ -108,8 +107,10 @@ void serverInit()
             // Log connection event
             char log_entry[MAX_LOG_MSG_SIZE];
             snprintf(log_entry, MAX_LOG_MSG_SIZE, "New client connecting (ID:%d)\n", clientList[freeId].clientThreadId);
+            pthread_mutex_lock(&logMutex);
             fputs(log_entry, logFp);
             fflush(logFp);
+            pthread_mutex_unlock(&logMutex);
 
             // @todo Handle thread creation failure
             pthread_create(&clientList[freeId].clientThread, NULL, handleNewClient, args);
@@ -148,6 +149,7 @@ void *handleNewClient(void *arg)
     client *clientList = ((thread_args*)arg)->clientList;
     FILE *logFp = ((thread_args*)arg)->logFp;
     int id = ((thread_args*)arg)->currentId;
+    pthread_mutex_t logMutex = ((thread_args*)arg)->logMutex;
 
     char buff[MAX_BUF] = {0};
     char msg[MAX_BUF] = {0};
@@ -188,9 +190,10 @@ void *handleNewClient(void *arg)
             clientList[id].clientConnected = false;
 
             // Log disconnect event
-            // @todo Use mutex to avoid multi-thread file access
+            pthread_mutex_lock(&logMutex);
             fputs(log_entry, logFp);
             fflush(logFp);
+            pthread_mutex_unlock(&logMutex);
             pthread_exit(0);
         }
 
